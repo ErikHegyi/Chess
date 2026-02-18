@@ -1,9 +1,13 @@
 mod tensor;
+mod dimensions;
 mod activation_functions;
 mod layer;
-mod dimensions;
+mod cnn;
+mod constant_parameters;
 
 pub use tensor::Tensor;
+pub use dimensions::Dimensions;
 pub use activation_functions::ActivationFunction;
 pub use layer::Layer;
-pub use dimensions::Dimensions;
+pub use cnn::CNN;
+pub use constant_parameters::*;

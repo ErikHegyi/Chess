@@ -2,5 +2,7 @@
 resolver = "3"
 members = [
     "crates/engine",
-    "crates/ml"
-, "crates/rules"]
+    "crates/ml",
+    "crates/rules",
+    "tools/run"
+]

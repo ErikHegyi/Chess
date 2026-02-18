@@ -1,5 +1,8 @@
 use std::fmt::{Debug, Display, Formatter};
+use std::ops::{Add, Index, Mul, Sub};
 
+
+#[derive(Clone)]
 pub struct Tensor {
     data: Vec<f64>,
     dimensions: Vec<usize>
@@ -144,12 +147,31 @@ impl Tensor {
     /// If the tensor has only one element, return it.
     /// Panics if the tensor has more than one element.
     pub fn item(&self) -> f64 {
-        if self.data.len() != 1 {
+        if self.data.len() > 1 {
             panic!("Tensor has more than one element")
+        } else if self.data.len() < 1 {
+            panic!("Tensor does not have any elements")
         } else {
             self.data[0]
         }
     }
+
+    pub fn zeros(dimensions: Vec<usize>) -> Self {
+        Self {
+            data: vec![0.0; dimensions.iter().product()],
+            dimensions
+        }
+    }
+
+    pub fn wrap_scalar(x: f64) -> Self {
+        todo!()
+    }
+
+    pub fn sum(&self) -> f64 {
+        self.data.iter().sum::<f64>()
+    }
+
+    pub fn transpose(&self) -> Self { todo!() }
 }
 
 impl Display for Tensor {  // text: Tensor of size insert dimensions
@@ -176,46 +198,87 @@ impl From<Vec<Vec<f64>>> for Tensor {  // Create a 2D tensor
     }
 }
 
-// TODO: Create a macro for creating an N-dimensional tensor using square brackets, like this
-/*
-let vector = tensor![
-    1, 2, 3, 4, 5
-];
-let matrix = tensor![
-    [1, 2, 3, 4, 5], [6, 7, 8, 9, 10]
-];
-let tensor = tensor![
-    [
-        [
-            [1, 2, 3, 4, 5], [6, 7, 8, 9, 10]
-        ],
-        [
-            [11, 12, 13, 14, 15], [16, 17, 18, 19, 20]
-        ]
-    ],
-    [
-        [
-            [21, 22, 23, 24, 25], [26, 27, 28, 29, 30]
-        ],
-        [
-            [31, 32, 33, 34, 35], [36, 37, 38, 39, 40]
-        ]
-    ],
-    [
-        [
-            [1, 2, 3, 4, 5], [6, 7, 8, 9, 10]
-        ],
-        [
-            [11, 12, 13, 14, 15], [16, 17, 18, 19, 20]
-        ]
-    ],
-    [
-        [
-            [21, 22, 23, 24, 25], [26, 27, 28, 29, 30]
-        ],
-        [
-            [31, 32, 33, 34, 35], [36, 37, 38, 39, 40]
-        ]
-    ]
-]
-*/
+impl<'a> Mul<&'a Tensor> for &'a Tensor {
+    type Output = &'a Tensor;
+
+    fn mul(self, rhs: &'a Tensor) -> Self::Output {
+        todo!()
+    }
+}
+
+impl<'a> Mul<f64> for &'a Tensor {
+    type Output = &'a Tensor;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        todo!()
+    }
+}
+
+impl Mul<f64> for Tensor {
+    type Output = Tensor;
+    fn mul(self, rhs: f64) -> Self::Output {
+        todo!()
+    }
+}
+
+impl Add<Tensor> for Tensor {
+    type Output = Self;
+    fn add(self, rhs: Tensor) -> Self::Output {
+        todo!()
+    }
+}
+
+impl<'a> Add<&'a Tensor> for Tensor {
+    type Output = &'a Tensor;
+    fn add(self, rhs: &'a Tensor) -> Self::Output {
+        todo!()
+    }
+}
+
+impl Sub<Tensor> for Tensor {
+    type Output = Tensor;
+    fn sub(self, rhs: Tensor) -> Self::Output {
+        todo!()
+    }
+}
+
+impl<'a> Sub<&'a Tensor> for Tensor {
+    type Output = &'a Tensor;
+    fn sub(self, rhs: &'a Tensor) -> Self::Output {
+        todo!()
+    }
+}
+
+impl<'a> Sub<&'a Tensor> for &'a Tensor {
+    type Output = &'a Tensor;
+    fn sub(self, rhs: &'a Tensor) -> Self::Output {
+        todo!()
+    }
+}
+
+impl<'a> Add<f64> for &'a Tensor {
+    type Output = Tensor;
+    fn add(self, rhs: f64) -> Self::Output {
+        // Create a new vector
+        let dimensions: Vec<usize> = self.dimensions.clone();
+        let data: Vec<f64> = self.data.iter().map(|x| x + rhs).collect::<Vec<f64>>();
+        Tensor::new(data, dimensions)
+    }
+}
+
+impl<'a> Sub<f64> for &'a Tensor {
+    type Output = Tensor;
+    fn sub(self, rhs: f64) -> Self::Output {
+        // Create a new vector
+        let dimensions: Vec<usize> = self.dimensions.clone();
+        let data: Vec<f64> = self.data.iter().map(|x| x - rhs).collect::<Vec<f64>>();
+        Tensor::new(data, dimensions)
+    }
+}
+
+impl Index<usize> for Tensor {
+    type Output = Tensor;
+    fn index(&self, index: usize) -> &Self::Output {
+        todo!()
+    }
+}
