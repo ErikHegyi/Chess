@@ -205,7 +205,7 @@ impl ChessNet {
         let mut optimizer: Optimizer = Adam::default().build(variable_store, LAMBDA).unwrap();
 
         // Play a certain amount of matches
-        for m in 1..=matches {
+        for _ in 1..=matches {
             // Initialize the game
             let mut game: Game = base_game.clone();
 
@@ -329,7 +329,7 @@ impl ChessNet {
 
                     match game.export(&file_path) {
                         Ok(_) => (),
-                        Err(e) => println!("Failed to save match {match_id}.")
+                        Err(_) => println!("Failed to save match {match_id}.")
                     }
                 },
                 None => ()
