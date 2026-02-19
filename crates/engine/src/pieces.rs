@@ -2,7 +2,7 @@ use crate::board::ChessBoard;
 use serde::{Deserialize, Serialize};
 
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PieceType {
     Pawn,
     Knight,
@@ -48,6 +48,10 @@ impl Piece {
 
         // Move the piece
         self.position = position;
+    }
+    
+    pub fn piece_type(&self) -> PieceType {
+        self.piece_type
     }
 
     pub fn legal_moves(&self, board: &ChessBoard) -> MoveVector {

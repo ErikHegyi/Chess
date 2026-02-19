@@ -13,4 +13,6 @@ impl Player {
     pub fn new() -> Self { Self { pieces: Vec::new(), is_in_the_game: true } }
     pub fn add_piece(&mut self, piece: Piece) { self.pieces.push(piece) }
     pub fn is_in_the_game(&self) -> bool { self.is_in_the_game }
+    pub fn get_pieces(&self) -> &Vec<Piece> { &self.pieces }
+    pub fn number_of_pieces(&self) -> usize { self.get_pieces().len() }
 }

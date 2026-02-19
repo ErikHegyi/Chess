@@ -7,5 +7,9 @@ mod player;
 mod hyperparameters;
 
 
-pub use network::ChessNet;
-pub use network::build_model;
+pub use player::Player;
+pub use board_mask::BoardMask;
+pub use board::ChessBoard;
+pub use pieces::*;
+pub use game::Game;
+pub use network::*;
