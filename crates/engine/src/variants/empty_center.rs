@@ -1,0 +1,1 @@
+/* 4 tiles in the center are empty */
