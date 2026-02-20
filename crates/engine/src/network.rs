@@ -18,16 +18,12 @@ use tch::{
     },
     nn
 };
-use crate::{
-    board::ChessBoard,
-    game::Game,
-    player::Player,
-    hyperparameters::*
-};
-
+use crate::{hyperparameters::*, Export, Variant};
+use crate::state::{Move, StateTensor};
 
 #[derive(Debug)]
 struct Net2D {
+    variable_store: nn::VarStore,
     conv_1: Conv2D,
     conv_2: Conv2D,
     conv_3: Conv2D,
@@ -37,7 +33,7 @@ struct Net2D {
     fc: Linear
 }
 impl Net2D {
-    fn new(variable_store: &nn::Path, in_channels: i64) -> Self {
+    fn new(variable_store: nn::VarStore, in_channels: i64) -> Self {
         // Configure the properties of the convolutional layers
         let conv_config: nn::ConvConfig = nn::ConvConfig {
             stride: 1,
@@ -46,18 +42,18 @@ impl Net2D {
         };
 
         // Create the convolutional layers
-        let conv_1: Conv2D = nn::conv2d(variable_store, in_channels, in_channels, KERNEL_SIZE, conv_config);
-        let conv_2: Conv2D = nn::conv2d(variable_store, in_channels, in_channels, KERNEL_SIZE, conv_config);
-        let conv_3: Conv2D = nn::conv2d(variable_store, in_channels, 32, KERNEL_SIZE, conv_config);
-        let conv_4: Conv2D = nn::conv2d(variable_store, 32, 64, KERNEL_SIZE, conv_config);
-        let conv_5: Conv2D = nn::conv2d(variable_store, 64, 128, KERNEL_SIZE, conv_config);
-        let conv_6: Conv2D = nn::conv2d(variable_store, 128, 256, KERNEL_SIZE, conv_config);
+        let conv_1: Conv2D = nn::conv2d(&variable_store.root(), in_channels, in_channels, KERNEL_SIZE, conv_config);
+        let conv_2: Conv2D = nn::conv2d(&variable_store.root(), in_channels, in_channels, KERNEL_SIZE, conv_config);
+        let conv_3: Conv2D = nn::conv2d(&variable_store.root(), in_channels, 32, KERNEL_SIZE, conv_config);
+        let conv_4: Conv2D = nn::conv2d(&variable_store.root(), 32, 64, KERNEL_SIZE, conv_config);
+        let conv_5: Conv2D = nn::conv2d(&variable_store.root(), 64, 128, KERNEL_SIZE, conv_config);
+        let conv_6: Conv2D = nn::conv2d(&variable_store.root(), 128, 256, KERNEL_SIZE, conv_config);
 
         // Create the linear layer
-        let fc: Linear = nn::linear(variable_store, 256, 1, Default::default());
+        let fc: Linear = nn::linear(&variable_store.root(), 256, 1, Default::default());
 
         // Return the network
-        Self { conv_1, conv_2, conv_3, conv_4, conv_5, conv_6, fc}
+        Self { variable_store, conv_1, conv_2, conv_3, conv_4, conv_5, conv_6, fc}
     }
 }
 
@@ -99,6 +95,7 @@ impl ModuleT for Net2D {
 
 #[derive(Debug)]
 struct Net3D {
+    variable_store: nn::VarStore,
     conv_1: Conv3D,
     conv_2: Conv3D,
     conv_3: Conv3D,
@@ -108,7 +105,7 @@ struct Net3D {
     fc: Linear
 }
 impl Net3D {
-    fn new(variable_store: &nn::Path, in_channels: i64) -> Self {
+    fn new(variable_store: nn::VarStore, in_channels: i64) -> Self {
         // Configure the properties of the convolutional layers
         let conv_config: nn::ConvConfig = nn::ConvConfig {
             stride: 1,
@@ -117,18 +114,18 @@ impl Net3D {
         };
 
         // Create the convolutional layers
-        let conv_1: Conv3D = nn::conv3d(variable_store, in_channels, in_channels, KERNEL_SIZE, conv_config);
-        let conv_2: Conv3D = nn::conv3d(variable_store, in_channels, in_channels, KERNEL_SIZE, conv_config);
-        let conv_3: Conv3D = nn::conv3d(variable_store, in_channels, 32, KERNEL_SIZE, conv_config);
-        let conv_4: Conv3D = nn::conv3d(variable_store, 32, 64, KERNEL_SIZE, conv_config);
-        let conv_5: Conv3D = nn::conv3d(variable_store, 64, 128, KERNEL_SIZE, conv_config);
-        let conv_6: Conv3D = nn::conv3d(variable_store, 128, 256, KERNEL_SIZE, conv_config);
+        let conv_1: Conv3D = nn::conv3d(&variable_store.root(), in_channels, in_channels, KERNEL_SIZE, conv_config);
+        let conv_2: Conv3D = nn::conv3d(&variable_store.root(), in_channels, in_channels, KERNEL_SIZE, conv_config);
+        let conv_3: Conv3D = nn::conv3d(&variable_store.root(), in_channels, 32, KERNEL_SIZE, conv_config);
+        let conv_4: Conv3D = nn::conv3d(&variable_store.root(), 32, 64, KERNEL_SIZE, conv_config);
+        let conv_5: Conv3D = nn::conv3d(&variable_store.root(), 64, 128, KERNEL_SIZE, conv_config);
+        let conv_6: Conv3D = nn::conv3d(&variable_store.root(), 128, 256, KERNEL_SIZE, conv_config);
 
         // Create the linear layer
-        let fc: Linear = nn::linear(variable_store, 256, 1, Default::default());
+        let fc: Linear = nn::linear(&variable_store.root(), 256, 1, Default::default());
 
         // Return the network
-        Self { conv_1, conv_2, conv_3, conv_4, conv_5, conv_6, fc}
+        Self { variable_store, conv_1, conv_2, conv_3, conv_4, conv_5, conv_6, fc}
     }
 }
 impl ModuleT for Net3D {
@@ -172,7 +169,7 @@ pub enum ChessNet {
 
 
 impl ChessNet {
-    pub fn new(vs: &nn::Path, dimensions: Vec<usize>) -> Self {
+    pub fn new(vs: nn::VarStore, dimensions: Vec<usize>) -> Self {
         // Get the number of channel dimensions
         let channel_dimensions: i64 = dimensions[0] as i64;
 
@@ -194,78 +191,65 @@ impl ChessNet {
         evaluated_tensor.double_value(&[0])
     }
 
-    pub fn train(
+    pub fn train<G>(
         &self,
-        variable_store: &nn::VarStore,
         matches: i64,
-        base_game: Game,
-        matches_folder: Option<&Path>
-    ) {
+        folder: Option<&Path>
+    ) where
+        G: Variant + StateTensor + Export + Clone + serde::Serialize
+    {
+        // Get the variable store
+        let variable_store: &nn::VarStore = match self {
+            ChessNet::Net2D(n) => &n.variable_store,
+            ChessNet::Net3D(n) => &n.variable_store
+        };
+
         // Create the optimizer
         let mut optimizer: Optimizer = Adam::default().build(variable_store, LAMBDA).unwrap();
 
         // Play a certain amount of matches
         for _ in 1..=matches {
             // Initialize the game
-            let mut game: Game = base_game.clone();
-
-            // Keep track of the number of moves
-            let mut move_number: usize = 0;
+            let mut game: G = G::new();
 
             // Save the state tensors into a vector
             let mut state_tensors: Vec<Vec<Tensor>> = Vec::new();
-            let mut predictions: Vec<Vec<Tensor>> = Vec::new();
-            for _ in 0..game.number_of_players() {
+
+            for _ in 0..G::number_of_players() {
                 state_tensors.push(Vec::new());
-                predictions.push(Vec::new());
             }
 
             // Play until checkmate or draw has been reached
-            while !game.is_over() {
-                // Get the players
-                let players: &Vec<Player> = game.get_players();
-
-                // Get the number of players
-                let n_players: usize = game.number_of_players();
-
+            while game.winner().is_none() {
                 // Get the current player
-                let current_player_index: usize = move_number % n_players;
-                let current_player: &Player = &players[current_player_index];
+                let current_player: usize = game.player_to_move();
 
-                if !current_player.is_in_the_game() { move_number += 1; continue; }
-
-                // Save the state tensor
-                state_tensors[current_player_index].push(game.state_tensor(move_number));
-
-                // Get all the possible moves for the current player
-                let possible_moves: Vec<ChessBoard> = game.possible_moves_for_player(current_player);
+                // Get each possible move for the player
+                let possible_moves: Vec<Move> = game.legal_moves(current_player);
 
                 // Rate each move
-                let move_values: Vec<Tensor> = possible_moves
+                let move_values: Vec<(Tensor, Tensor)> = possible_moves
                     .iter()
                     .map(
                         |x| {
                             // Make the move
-                            game.new_move(x.clone());
-
-                            // Get the state tensor
-                            let state_tensor: Tensor = game.state_tensor(move_number + 1);
-
-                            // Step back
-                            game.unmake_move();
+                            let state_tensor: Tensor = game.state_tensor_with_move(x.clone());
+                            let state_tensor: Tensor = state_tensor.unsqueeze(0);
 
                             // Rate the position
-                            match self {
-                                ChessNet::Net2D(network) => network.forward_t(&state_tensor, true),
-                                ChessNet::Net3D(network) => network.forward_t(&state_tensor, true)
-                            }
+                            let rating: Tensor = match self {
+                                ChessNet::Net2D(network) => network.forward_t(&state_tensor, false),
+                                ChessNet::Net3D(network) => network.forward_t(&state_tensor, false)
+                            };
+
+                            (state_tensor, rating)
                         }
                     ).collect();
 
                 // Select the best performing move
-                let (best_move, rating): (ChessBoard, Tensor) = zip(possible_moves, move_values)
+                let (best_move, (state_tensor, _)): (Move, (Tensor, Tensor)) = zip(possible_moves, move_values)
                     .into_iter()
-                    .max_by(|(_, a), (_, b)| {
+                    .max_by(|(_,( _, a)), (_, (_, b))| {
                         let x: f64 = a.double_value(&[0]);
                         let y: f64 = b.double_value(&[0]);
 
@@ -273,58 +257,79 @@ impl ChessNet {
                     })
                     .unwrap();
 
-                // Save the rating
-                predictions[current_player_index].push(rating);
-
                 // Make the best move
-                game.new_move(best_move);
+                game.move_piece(best_move);
 
-                // Increase the move counter
-                move_number += 1;
+                // Save the best move's state tensor
+                state_tensors[current_player].push(state_tensor);
             }
 
             // Backpropagate
-            for i in 0..move_number {
-                // Get the player index
-                let player_index: usize = i % game.number_of_players();
+            for (i, movement) in game.past_moves().clone().iter().enumerate() {
+                // Get the player
+                let player: usize = movement.player;
 
                 // Get the index of the object inside the vector
-                let vector_index: usize = i / game.number_of_players();
+                let vector_index: usize = i / G::number_of_players();
 
-                // Get the prediction
-                let y: &Tensor = &predictions[player_index][vector_index];
+                // Get the state tensors
+                let state_tensor: &Tensor = &state_tensors[player][vector_index];
 
-                // Get the next prediction
-                let next_player_index: usize = player_index + 1;
-                let next_vector_index: usize = vector_index + (player_index == game.number_of_players()) as usize;
-                let next_player_index: usize = next_player_index % game.number_of_players();
+                let next_player_index: usize = player + 1;
+                let next_vector_index: usize = vector_index + (player == G::number_of_players()) as usize;
+                let next_player_index: usize = next_player_index % G::number_of_players();
 
-                let y_2: &Tensor = &-&predictions[next_player_index][next_vector_index];
+                // Predict
+                let y: Tensor = match self {
+                    ChessNet::Net2D(network) => network.forward_t(state_tensor, true),
+                    ChessNet::Net3D(network) => network.forward_t(state_tensor, true)
+                };
 
                 // Get the result of the game
-                let result: f64 = if game.winner() == player_index { 1.0 } else { -1.0 };
+                let result: f64 = {
+                    match game.winner() {
+                        Some(p) => if p == 0 { 0.0 } else if p == -1 { -1.0 } else { 1.0 },
+                        None => panic!("How the hell did the while loop end?")
+                    }
+                };
                 let y_hat: Tensor = Tensor::from(result);
 
+                // Evaluate the position at the next move
+                let y_2: Tensor = if i + 1 < game.number_of_moves() {
+                    let state_tensor_2: &Tensor = &state_tensors[next_player_index][next_vector_index];
+                    match self {
+                        ChessNet::Net2D(network) => -network.forward_t(state_tensor_2, true),
+                        ChessNet::Net3D(network) => -network.forward_t(state_tensor_2, true)
+                    }
+                } else { Tensor::from(result) };
+
                 // Calculate bootstrapping loss
-                let loss_bs: Tensor = (y - y_2).pow_tensor_scalar(2);
+                let loss_bs: Tensor = (&y - &y_2).pow_tensor_scalar(2);
 
                 // Calculate Monte Carlo loss
                 let loss_mc: Tensor = (y - y_hat).pow_tensor_scalar(2);
 
                 // Calculate the final loss
-                let loss: Tensor = ALPHA * loss_bs + (1.0 - ALPHA) * loss_mc;
+                // Monte Carlo loss is only applicable on games with two players
+                let loss: Tensor = match G::number_of_players() {
+                    2 => ALPHA * loss_bs + (1.0 - ALPHA) * loss_mc,
+                    _ => loss_bs
+                };
 
                 // Step backwards
                 optimizer.backward_step(&loss);
             }
 
             // Save the match
-            match matches_folder {
+            match folder {
                 Some(path) => {
-                    // Get the ID of the match
-                    let match_id: usize = read_dir(path).unwrap().count() + 1;
+                    // Find the full path to the folder
+                    let path: PathBuf = path.join(format!("{folder_name}/matches", folder_name = G::folder_name()));
 
-                    // Get the complete path
+                    // Get the ID of the match
+                    let match_id: usize = read_dir(path.as_path()).unwrap().count() + 1;
+
+                    // Get the complete path to the file
                     let file_path: PathBuf = path.join(format!("{match_id}.json"));
 
                     match game.export(&file_path) {
@@ -335,22 +340,68 @@ impl ChessNet {
                 None => ()
             }
         }
+
+        // Export the model
+        match folder {
+            Some(path) => {
+                let file_path: PathBuf = path.join(format!("{folder_name}/model/model.ot", folder_name = G::folder_name()));
+                let vs: &nn::VarStore = match self {
+                    ChessNet::Net2D(net) => &net.variable_store,
+                    ChessNet::Net3D(net) => &net.variable_store
+                };
+                match vs.save(&file_path) {
+                    Ok(_) => (),
+                    Err(e) => panic!("Could not save model! ({e})")
+                };
+            },
+            None => ()
+        }
+
+    }
+
+    pub fn import<G>(path: &Path) -> Self
+    where
+        G: Variant + StateTensor + Export + Clone + serde::Serialize
+    {
+        // Get the device
+        let device: Device = Device::cuda_if_available();
+
+        // Create an empty variable storage
+        let mut vs: nn::VarStore = nn::VarStore::new(device);
+        vs.set_kind(tch::Kind::Double);
+
+        // Build model
+        let model: ChessNet = ChessNet::new(vs, G::dimensions());
+        match model {
+            ChessNet::Net2D(mut n) => {
+                n.variable_store.load(path).unwrap();
+                ChessNet::Net2D(n)
+            },
+            ChessNet::Net3D(mut n) => {
+                n.variable_store.load(path).unwrap();
+                ChessNet::Net3D(n)
+            }
+        }
     }
 }
 
-pub fn build_model(game: &Game) -> ChessNet {
+pub fn build_model<G>() -> ChessNet
+where
+    G: Variant + StateTensor + Export + Clone + serde::Serialize
+{
     // Get the device
     let device: Device = Device::cuda_if_available();
 
     // Create the variable storage
-    let vs: nn::VarStore = nn::VarStore::new(device);
+    let mut vs: nn::VarStore = nn::VarStore::new(device);
+    vs.set_kind(tch::Kind::Double);
 
-    // Get the dimensions
-    let dimensions: Vec<usize> = game.dim().clone();
+    // Get the spatial dimensions
+    let dimensions: Vec<usize> = G::dimensions();
 
     // Create the model
     let model: ChessNet = ChessNet::new(
-        &vs.root(), dimensions
+        vs, dimensions
     );
 
     model
