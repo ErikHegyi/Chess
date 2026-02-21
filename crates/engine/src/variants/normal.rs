@@ -361,8 +361,8 @@ impl Variant for NormalChess {
 
                                                     // Check each move
                                                     for m in moves_to_check {
-                                                        if m.to == vec![new_row as usize, new_column as usize] {
-                                                            if m.from == vec![(new_row - 2 * dir) as usize, new_column as usize] {
+                                                        if m.to == vec![row, new_column as usize] {
+                                                            if m.from == vec![(row as i8 + 2 * dir) as usize, new_column as usize] {
                                                                 possible_moves.push(
                                                                     Move {
                                                                         player,
@@ -429,633 +429,6 @@ impl Variant for NormalChess {
                                 }
                             }
                         },
-                        PieceType::Bishop => {
-                            // Northeast
-                            let mut i: usize = 1;
-                            while (row + i) < HEIGHT && (column + i) < WIDTH {
-                                // Calculate the new coordinates
-                                let new_row: i8 = (row + i) as i8;
-                                let new_column: i8 = (column + i) as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-
-                            // Northwest
-                            let mut i: usize = 1;
-                            while (row + i) < HEIGHT && (column as i8 - i as i8) >= 0 {
-                                // Calculate the new coordinates
-                                let new_row: i8 = (row + i) as i8;
-                                let new_column: i8 = (column - i) as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-
-                            // Southeast
-                            let mut i: usize = 1;
-                            while (row as i8 - i as i8) >= 0 && (column + i) < WIDTH {
-                                // Calculate the new coordinates
-                                let new_row: i8 = (row + i) as i8;
-                                let new_column: i8 = (column + i) as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-
-                            // Southwest
-                            let mut i: usize = 1;
-                            while (row as i8 - i as i8) >= 0 && (column as i8 - i as i8) >= 0 {
-                                // Calculate the new coordinates
-                                let new_row: i8 = (row + i) as i8;
-                                let new_column: i8 = (column + i) as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-                        },
-                        PieceType::Rook => {
-                            // North
-                            let mut i: usize = 1;
-                            while (row + i) < HEIGHT {
-                                // Calculate the new coordinates
-                                let new_row: i8 = (row + i) as i8;
-                                let new_column: i8 = column as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-
-                            // West
-                            let mut i: usize = 1;
-                            while (column as i8 - i as i8) >= 0 {
-                                // Calculate the new coordinates
-                                let new_row: i8 = row as i8;
-                                let new_column: i8 = (column - i) as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-
-                            // East
-                            let mut i: usize = 1;
-                            while (column + i) < WIDTH {
-                                // Calculate the new coordinates
-                                let new_row: i8 = row as i8;
-                                let new_column: i8 = (column + i) as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-
-                            // South
-                            let mut i: usize = 1;
-                            while (row as i8 - i as i8) >= 0 {
-                                // Calculate the new coordinates
-                                let new_row: i8 = (row - i) as i8;
-                                let new_column: i8 = column as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-                        },
-                        PieceType::Queen => {
-                            // Northeast
-                            let mut i: usize = 1;
-                            while (row + i) < HEIGHT && (column + i) < WIDTH {
-                                // Calculate the new coordinates
-                                let new_row: i8 = (row + i) as i8;
-                                let new_column: i8 = (column + i) as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-
-                            // Northwest
-                            let mut i: usize = 1;
-                            while (row + i) < HEIGHT && (column as i8 - i as i8) >= 0 {
-                                // Calculate the new coordinates
-                                let new_row: i8 = (row + i) as i8;
-                                let new_column: i8 = (column - i) as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-
-                            // Southeast
-                            let mut i: usize = 1;
-                            while (row as i8 - i as i8) >= 0 && (column + i) < WIDTH {
-                                // Calculate the new coordinates
-                                let new_row: i8 = (row + i) as i8;
-                                let new_column: i8 = (column + i) as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-
-                            // Southwest
-                            let mut i: usize = 1;
-                            while (row as i8 - i as i8) >= 0 && (column as i8 - i as i8) >= 0 {
-                                // Calculate the new coordinates
-                                let new_row: i8 = (row + i) as i8;
-                                let new_column: i8 = (column + i) as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-
-                            // North
-                            let mut i: usize = 1;
-                            while (row + i) < HEIGHT {
-                                // Calculate the new coordinates
-                                let new_row: i8 = (row + i) as i8;
-                                let new_column: i8 = column as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-
-                            // West
-                            let mut i: usize = 1;
-                            while (column as i8 - i as i8) >= 0 {
-                                // Calculate the new coordinates
-                                let new_row: i8 = row as i8;
-                                let new_column: i8 = (column - i) as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-
-                            // East
-                            let mut i: usize = 1;
-                            while (column + i) < WIDTH {
-                                // Calculate the new coordinates
-                                let new_row: i8 = row as i8;
-                                let new_column: i8 = (column + i) as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-
-                            // South
-                            let mut i: usize = 1;
-                            while (row as i8 - i as i8) >= 0 {
-                                // Calculate the new coordinates
-                                let new_row: i8 = (row - i) as i8;
-                                let new_column: i8 = column as i8;
-
-                                // Increment
-                                i += 1;
-
-                                // Check whether it is empty
-                                let new_index: usize = (new_row as usize) * WIDTH + (new_column as usize);
-                                if new_index >= board.len() { break; }
-                                match &board[new_index] {
-                                    Some(other) => {
-                                        // Possible move: take enemy piece
-                                        if other.player != player {
-                                            possible_moves.push(
-                                                Move {
-                                                    player,
-                                                    from: vec![row, column],
-                                                    to: vec![new_row as usize, new_column as usize],
-                                                    promotion: None
-                                                }
-                                            );
-                                        }
-                                        break;
-                                    },
-                                    None => possible_moves.push(
-                                        Move {
-                                            player,
-                                            from: vec![row, column],
-                                            to: vec![new_row as usize, new_column as usize],
-                                            promotion: None
-                                        }
-                                    )
-                                }
-                            }
-                        },
                         PieceType::King => {
                             // Define the offsets
                             let offsets: [(i8, i8); 8] = [
@@ -1103,6 +476,38 @@ impl Variant for NormalChess {
                                 }
                             }
                         },
+                        _ => {
+                            let directions: Vec<(i8, i8)> = match piece.piece_type {
+                                PieceType::Bishop => vec![(1,1), (1,-1), (-1,1), (-1,-1)],
+                                PieceType::Rook   => vec![(0,1), (0,-1), (1,0), (-1,0)],
+                                PieceType::Queen  => vec![(1,1), (1,-1), (-1,1), (-1,-1), (0,1), (0,-1), (1,0), (-1,0)],
+                                _ => vec![]
+                            };
+
+                            for (dr, dc) in directions {
+                                let mut i = 1;
+                                loop {
+                                    let new_r = row as i8 + (dr * i);
+                                    let new_c = column as i8 + (dc * i);
+
+                                    if new_r < 0 || new_r >= HEIGHT as i8 || new_c < 0 || new_c >= WIDTH as i8 { break; }
+
+                                    let target_idx = (new_r as usize) * WIDTH + (new_c as usize);
+                                    match &board[target_idx] {
+                                        Some(other) => {
+                                            if other.player != player {
+                                                possible_moves.push(Move { player, from: vec![row, column], to: vec![new_r as usize, new_c as usize], promotion: None });
+                                            }
+                                            break; // Hit a piece, stop sliding
+                                        },
+                                        None => {
+                                            possible_moves.push(Move { player, from: vec![row, column], to: vec![new_r as usize, new_c as usize], promotion: None });
+                                        }
+                                    }
+                                    i += 1;
+                                }
+                            }
+                        }
                     }
                 },
                 None => continue
@@ -1113,45 +518,16 @@ impl Variant for NormalChess {
     }
     fn legal_moves(&self, player: usize) -> Vec<Move> {
         // Filter out moves that threaten the king
-        // Find the king
-        let mut king_position: Option<Vec<usize>> = None;
-        for (i, tile) in self.state.board.iter().enumerate() {
-            match tile {
-                Some(piece) => {
-                    if piece.piece_type == PieceType::King && piece.player == player {
-                        king_position = Some(vec![i % WIDTH, i / WIDTH]);
-                    }
-                },
-                None => continue
+        let possible_moves: Vec<Move> = self.possible_moves(player);
+        let mut legal_moves: Vec<Move> = Vec::new();
+
+        for m in possible_moves {
+            let mut temp_game: Self = self.clone();
+            temp_game.move_piece(m.clone());
+            if !temp_game.is_king_in_check(player) {
+                legal_moves.push(m);
             }
         }
-
-        // Error handling
-        if king_position.is_none() {
-            panic!("King not found!");
-        }
-
-        // Unwrap
-        let king_position: Vec<usize> = king_position.unwrap();
-
-        // Generate possible moves
-        let possible_moves: Vec<Move> = self.possible_moves(player);
-
-        // Filter out any moves that put the king in danger
-        let legal_moves_iter = possible_moves
-            .iter()
-            .filter(
-                |m| !(
-                    m.from == king_position && self.is_in_check(player, m.to.clone())
-                ) && {
-                    if self.is_king_in_check(player) { m.from == king_position } else { true }
-                }
-            );
-
-        let mut legal_moves: Vec<Move> = Vec::new();
-        for m in legal_moves_iter {
-            legal_moves.push(m.clone())
-        };
 
         legal_moves
     }
@@ -1208,7 +584,7 @@ impl Variant for NormalChess {
         // En passant
         if piece.piece_type == PieceType::Pawn {
             // Changed columns
-            if movement.from[1] != movement.to[1] {
+            if movement.from[1] != movement.to[1] && self.state.board[to].is_none() {
                 // Get the direction
                 let dir: i32 = (movement.to[0] as i32 - movement.from[0] as i32) / (movement.to[0] as i32 - movement.from[0] as i32).abs();
 
@@ -1231,7 +607,10 @@ impl Variant for NormalChess {
 
         // Make the piece appear somewhere else
         self.state.last_capture = if self.state.board[to].is_some() { 0 } else { self.state.last_capture + 1 };
-        self.state.board[to] = Some(piece);
+        self.state.board[to] = if movement.promotion.is_none() { Some(piece) } else {
+            piece.piece_type = movement.promotion.unwrap();
+            Some(piece)
+        };
 
         // Append the move
         self.state.moves.push(movement);
