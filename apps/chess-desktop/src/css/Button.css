@@ -1,0 +1,59 @@
+.btn {
+    /* Font */
+    font-family: inherit;
+    font-size: 5vh;
+
+    /* Size */
+    width: clamp(250px, 25vw, 800px);
+
+    /* Space */
+    margin: 10px;
+
+    /* Color */
+    background-color: #181a19;
+    color: #cccccc;
+
+    /* Remove border */
+    border: none;
+
+    /* Round */
+    border-radius: 10px;
+
+    /* Pad */
+    padding: 15px;
+
+    /* Add a shadow */
+    box-shadow: 2px 2px 5px #686868;
+
+    /* Signify hovering*/
+    cursor: pointer;
+
+    /* Set the animation length */
+    transition-duration: 0.2s;
+}
+
+.btn:hover {
+    /* Pad more to the sides */
+    width: clamp(260px, 26vw, 810px);
+    padding: 15px 25px;
+
+    /* Make the text whiter */
+    color: white;
+
+    /* Make the text glow */
+    text-shadow: 1px 1px white;
+
+    /* Add an inner glow */
+    box-shadow: 4px 4px 5px #686868, inset 2px 2px 5px #686868;
+}
+
+.selected {
+    /* Make the text whiter */
+    color: white;
+
+    /* Make the text glow */
+    text-shadow: 1px 1px white;
+
+    /* Add an inner glow */
+    box-shadow: 4px 4px 5px #686868, inset 2px 2px 5px #686868;
+}

@@ -1,0 +1,11 @@
+.main-menu {
+    /* Expand to full size */
+    width: 98vw;
+    height: 97vh;
+
+    /* Center */
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
