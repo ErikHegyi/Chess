@@ -32,7 +32,12 @@ export const Game = ({variant, dimensions, state}: ChessGame) => {
                     // Move the piece
                     let from = state.moves[i].from[0] * columns + state.moves[i].from[1];
                     let to = state.moves[i].to[0] * columns + state.moves[i].to[1];
-                    newPieces[to] = newPieces[from];
+                    if (state.moves[i].promotion) newPieces[to] = {
+                        piece_type: state.moves[i].promotion,
+                        player: state.moves[i].player,
+                        first_move: false
+                    }
+                    else newPieces[to] = newPieces[from];
                     newPieces[from] = null;
                 }
                 setPieces(newPieces);
