@@ -9,6 +9,7 @@ const HEIGHT: usize = 8;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NormalChess {
+    variant: String,
     state: State
 }
 
@@ -192,7 +193,7 @@ impl Variant for NormalChess {
         };
 
         // Return the game struct
-        Self { state }
+        Self { variant: "classic".to_string(), state }
     }
     #[inline]
     fn folder_name() -> String { "normal".to_string() }
