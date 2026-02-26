@@ -4,5 +4,5 @@ mod variants;
 mod state;
 
 pub use network::*;
-pub use variants::NormalChess;
+pub use variants::ClassicChess;
 pub use state::{Variant, Export};

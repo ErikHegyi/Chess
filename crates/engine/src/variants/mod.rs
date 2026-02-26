@@ -1,3 +1,3 @@
-mod normal;
+mod classic;
 
-pub use normal::NormalChess;
+pub use classic::ClassicChess;

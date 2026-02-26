@@ -8,14 +8,14 @@ const HEIGHT: usize = 8;
 
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct NormalChess {
+pub struct ClassicChess {
     variant: String,
     dimensions: Vec<usize>,
     state: State
 }
 
 
-impl StateTensor for NormalChess {
+impl StateTensor for ClassicChess {
     fn state_tensor(&self) -> Tensor {
         let mut this: Self = self.clone();
 
@@ -192,7 +192,7 @@ impl StateTensor for NormalChess {
     fn dimensions() -> Vec<usize> { vec![Self::number_of_players() * Self::number_of_pieces() + 1, HEIGHT, WIDTH] }
 }
 
-impl Variant for NormalChess {
+impl Variant for ClassicChess {
     fn new() -> Self {
         // Create the board vector
         let mut board: Vec<Option<Piece>> = vec![None; WIDTH * HEIGHT];
@@ -886,4 +886,4 @@ impl Variant for NormalChess {
 }
 
 
-impl Export for NormalChess {}
+impl Export for ClassicChess {}
