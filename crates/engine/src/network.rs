@@ -20,6 +20,8 @@ use tch::{
 };
 use crate::{hyperparameters::*, Export, Variant};
 use crate::state::{Move, StateTensor};
+use rand;
+use rand::RngExt;
 
 #[derive(Debug)]
 struct Net2D {
@@ -183,12 +185,12 @@ impl ChessNet {
         }
     }
 
-    pub fn evaluate(&self, state_tensor: Tensor) -> f64 {
+    pub fn evaluate(&self, state_tensor: Tensor) -> f32 {
         let evaluated_tensor: Tensor = match self {
             ChessNet::Net2D(network) => network.forward_t(&state_tensor, false),
             ChessNet::Net3D(network) => network.forward_t(&state_tensor, false)
         };
-        evaluated_tensor.double_value(&[0])
+        evaluated_tensor.double_value(&[]) as f32
     }
 
     pub fn train<G>(
@@ -207,8 +209,13 @@ impl ChessNet {
         // Create the optimizer
         let mut optimizer: Optimizer = Adam::default().build(variable_store, LAMBDA).unwrap();
 
+        // Create a random range
+        let mut rng: rand::prelude::ThreadRng = rand::rng();
+
         // Play a certain amount of matches
-        for _ in 1..=matches {
+        for match_id in 1..=matches {
+            let mut skip_match: bool = false;
+
             // Initialize the game
             let mut game: G = G::new();
 
@@ -247,15 +254,27 @@ impl ChessNet {
                     ).collect();
 
                 // Select the best performing move
-                let (best_move, (state_tensor, _)): (Move, (Tensor, Tensor)) = zip(possible_moves, move_values)
+                let (best_move, (state_tensor, _)): (Move, (Tensor, Tensor)) = match zip(possible_moves, move_values)
                     .into_iter()
-                    .max_by(|(_,( _, a)), (_, (_, b))| {
-                        let x: f64 = a.double_value(&[0]);
-                        let y: f64 = b.double_value(&[0]);
+                    .max_by(|(move_x,( _, a)), (move_y, (_, b))| {
+                        let x: f32 = a.double_value(&[0]) as f32
+                            + rng.random_range(-0.5..0.5)
+                            + MU * game.material_advantage_with_move(move_x.clone()) as f32
+                            + if game.is_other_king_in_check_with_move(move_x.clone()) { KAPPA } else { 0.0 };
+                        let y: f32 = b.double_value(&[0]) as f32
+                            + rng.random_range(-0.5..0.5)
+                            + MU * game.material_advantage_with_move(move_y.clone()) as f32
+                            + if game.is_other_king_in_check_with_move(move_y.clone()) { KAPPA } else { 0.0 };
 
                         x.total_cmp(&y)
-                    })
-                    .unwrap();
+                    }) {
+                    Some(x) => x,
+                    None => {
+                        // Something went catastrophically wrong, skip the match
+                        skip_match = true;
+                        break;
+                    }
+                };
 
                 // Make the best move
                 game.move_piece(best_move);
@@ -264,60 +283,106 @@ impl ChessNet {
                 state_tensors[current_player].push(state_tensor);
             }
 
+            if skip_match { continue; }
+
+            let n_moves: f32 = game.number_of_moves() as f32;
+
+            // Get the result of the game
+            // game.winner() returns 1 if the given player won, otherwise 0 or -1
+            let mut results: Vec<f32> = Vec::new();
+            for player in 0..G::number_of_players() {
+                match game.winner() {
+                    Some(p) => {
+                        // Calculate the result
+                        let result: f32 = match p {
+                            -1 => -1.0,
+                            _ => if player == p as usize { 1.0 } else { -1.0 }
+                        };
+                        results.push(result - OMICRON * n_moves)
+                    },
+                    None => {
+                        panic!("How did the while loop end?")
+                    }
+                }
+            }
+            println!("{results:?}, {}", game.winner().unwrap());
+
             // Backpropagate
-            for (i, movement) in game.past_moves().clone().iter().enumerate() {
-                // Get the player
-                let player: usize = movement.player;
-
-                // Get the index of the object inside the vector
-                let vector_index: usize = i / G::number_of_players();
-
-                // Get the state tensors
-                let state_tensor: &Tensor = &state_tensors[player][vector_index];
-
-                let next_player_index: usize = player + 1;
-                let next_vector_index: usize = vector_index + (player == G::number_of_players()) as usize;
-                let next_player_index: usize = next_player_index % G::number_of_players();
-
-                // Predict
-                let y: Tensor = match self {
-                    ChessNet::Net2D(network) => network.forward_t(state_tensor, true),
-                    ChessNet::Net3D(network) => network.forward_t(state_tensor, true)
+            let epochs: usize = match results.iter().any(|x| *x > 0.0) {
+                false => 1,
+                true => {
+                    println!("Win on match {match_id}!");
+                    5
+                }
+            };
+            for _ in 0..epochs {
+                //let mut total_loss: Option<Tensor> = None;
+                let mut total_loss: Option<Tensor> = {
+                    // Predict
+                    let y: Tensor = match self {
+                        ChessNet::Net2D(network) => network.forward_t(&state_tensors[0][0], true),
+                        ChessNet::Net3D(network) => network.forward_t(&state_tensors[0][0], true)
+                    };
+                    let y_hat: Tensor = Tensor::from(results[0]);
+                    let loss_mc: Tensor = (y - y_hat).pow_tensor_scalar(2);
+                    Some(loss_mc)
                 };
+                for (i, movement) in game.past_moves().clone().iter().enumerate() {
+                    // Get the player
+                    let player: usize = movement.player;
 
-                // Get the result of the game
-                let result: f64 = {
-                    match game.winner() {
-                        Some(p) => if p == 0 { 0.0 } else if p == -1 { -1.0 } else { 1.0 },
-                        None => panic!("How the hell did the while loop end?")
+                    // Get the index of the object inside the vector
+                    let vector_index: usize = i / G::number_of_players();
+
+                    // Get the state tensors
+                    let state_tensor: &Tensor = &state_tensors[player][vector_index];
+
+                    let next_player_index: usize = player + 1;
+                    let next_vector_index: usize = vector_index + (player == G::number_of_players()) as usize;
+                    let next_player_index: usize = next_player_index % G::number_of_players();
+
+                    // Predict
+                    let y: Tensor = match self {
+                        ChessNet::Net2D(network) => network.forward_t(state_tensor, true),
+                        ChessNet::Net3D(network) => network.forward_t(state_tensor, true)
+                    };
+                    let y_hat: Tensor = Tensor::from(results[movement.player]);
+
+                    // Evaluate the position at the next move
+                    let y_2: Tensor = if i + 1 < game.number_of_moves() {
+                        let state_tensor_2: &Tensor = &state_tensors[next_player_index][next_vector_index];
+                        match self {
+                            ChessNet::Net2D(network) => (-network.forward_t(state_tensor_2, true)).detach(),
+                            ChessNet::Net3D(network) => (-network.forward_t(state_tensor_2, true)).detach()
+                        }
+                    } else { Tensor::from(results[movement.player]) };
+
+                    // Calculate bootstrapping loss
+                    let loss_bs: Tensor = (&y - &y_2).pow_tensor_scalar(2);
+
+                    // Calculate Monte Carlo loss
+                    let loss_mc: Tensor = (y - y_hat).pow_tensor_scalar(2);
+
+                    // Calculate the final loss
+                    // Monte Carlo loss is only applicable on games with two players
+                    let loss: Tensor = match G::number_of_players() {
+                        2 => ALPHA * loss_bs + (1.0 - ALPHA) * loss_mc,
+                        _ => loss_bs
+                    };
+
+                    // Save the loss
+                    if total_loss.is_none() {
+                        total_loss = Some(loss);
+                    } else {
+                        total_loss = Some(total_loss.unwrap() + loss);
                     }
-                };
-                let y_hat: Tensor = Tensor::from(result);
-
-                // Evaluate the position at the next move
-                let y_2: Tensor = if i + 1 < game.number_of_moves() {
-                    let state_tensor_2: &Tensor = &state_tensors[next_player_index][next_vector_index];
-                    match self {
-                        ChessNet::Net2D(network) => -network.forward_t(state_tensor_2, true),
-                        ChessNet::Net3D(network) => -network.forward_t(state_tensor_2, true)
-                    }
-                } else { Tensor::from(result) };
-
-                // Calculate bootstrapping loss
-                let loss_bs: Tensor = (&y - &y_2).pow_tensor_scalar(2);
-
-                // Calculate Monte Carlo loss
-                let loss_mc: Tensor = (y - y_hat).pow_tensor_scalar(2);
-
-                // Calculate the final loss
-                // Monte Carlo loss is only applicable on games with two players
-                let loss: Tensor = match G::number_of_players() {
-                    2 => ALPHA * loss_bs + (1.0 - ALPHA) * loss_mc,
-                    _ => loss_bs
-                };
+                }
 
                 // Step backwards
-                optimizer.backward_step(&loss);
+                match total_loss {
+                    Some(loss) => optimizer.backward_step(&loss),
+                    None => panic!("This should not have been possible")
+                }
             }
 
             // Save the match
@@ -339,24 +404,23 @@ impl ChessNet {
                 },
                 None => ()
             }
-        }
 
-        // Export the model
-        match folder {
-            Some(path) => {
-                let file_path: PathBuf = path.join(format!("{folder_name}/model/model.ot", folder_name = G::folder_name()));
-                let vs: &nn::VarStore = match self {
-                    ChessNet::Net2D(net) => &net.variable_store,
-                    ChessNet::Net3D(net) => &net.variable_store
-                };
-                match vs.save(&file_path) {
-                    Ok(_) => (),
-                    Err(e) => panic!("Could not save model! ({e})")
-                };
-            },
-            None => ()
+            // Export the model
+            match folder {
+                Some(path) => {
+                    let file_path: PathBuf = path.join(format!("{folder_name}/model/model.ot", folder_name = G::folder_name()));
+                    let vs: &nn::VarStore = match self {
+                        ChessNet::Net2D(net) => &net.variable_store,
+                        ChessNet::Net3D(net) => &net.variable_store
+                    };
+                    match vs.save(&file_path) {
+                        Ok(_) => (),
+                        Err(e) => panic!("Could not save model! ({e})")
+                    };
+                },
+                None => ()
+            }
         }
-
     }
 
     pub fn import<G>(path: &Path) -> Self
@@ -368,7 +432,7 @@ impl ChessNet {
 
         // Create an empty variable storage
         let mut vs: nn::VarStore = nn::VarStore::new(device);
-        vs.set_kind(tch::Kind::Double);
+        vs.set_kind(tch::Kind::Float);
 
         // Build model
         let model: ChessNet = ChessNet::new(vs, G::dimensions());
@@ -394,7 +458,7 @@ where
 
     // Create the variable storage
     let mut vs: nn::VarStore = nn::VarStore::new(device);
-    vs.set_kind(tch::Kind::Double);
+    vs.set_kind(tch::Kind::Float);
 
     // Get the spatial dimensions
     let dimensions: Vec<usize> = G::dimensions();
