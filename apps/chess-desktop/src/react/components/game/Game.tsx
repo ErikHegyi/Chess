@@ -20,18 +20,19 @@ export const Game = ({variant, dimensions, state}: ChessGame) => {
         border: '5px solid black'
     };
 
-    let [moves, setMoves] = useState(-1);
+    let [moves, setMoves] = useState(0);
     useEffect(() => {
         const handleKey = (event: KeyboardEvent) => {
             if ( event.key === 'ArrowLeft' || event.key === 'ArrowRight' ) {
                 // Calculate the move index
-                setMoves(Math.min(Math.max(0, moves + (event.key === 'ArrowRight' ? 1 : -1)), state.moves.length));
+                const direction: number = (event.key === 'ArrowRight' ? 1 : -1);
+                const targetMoves: number = Math.min(Math.max(0, moves + direction), state.moves.length);
 
                 let newPieces = structuredClone(state.starting_board);
-                for ( let i = 0; i < moves; ++i ) {
+                for ( let i = 0; i < targetMoves; ++i ) {
                     // Move the piece
-                    let from = state.moves[i].from[0] * columns + state.moves[i].from[1];
-                    let to = state.moves[i].to[0] * columns + state.moves[i].to[1];
+                    let from = state.moves[i].from;
+                    let to = state.moves[i].to;
                     if (state.moves[i].promotion) newPieces[to] = {
                         piece_type: state.moves[i].promotion,
                         player: state.moves[i].player,
@@ -41,6 +42,7 @@ export const Game = ({variant, dimensions, state}: ChessGame) => {
                     newPieces[from] = null;
                 }
                 setPieces(newPieces);
+                setMoves(targetMoves);
             }
         }
         window.addEventListener('keydown', handleKey);

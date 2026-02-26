@@ -7,8 +7,8 @@ interface Piece {
 
 interface Move {
     player: number,
-    from: [number , number],
-    to: [number, number],
+    from: number,
+    to: number,
     promotion: String | null
 }
 

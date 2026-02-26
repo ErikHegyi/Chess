@@ -3,9 +3,16 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use tch::Tensor;
 
-pub type Position = Vec<usize>;
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub enum PieceType { Pawn, Knight, Bishop, Rook, Queen, King }
+impl PieceType {
+    pub fn material_value(&self) -> i64 {
+        match *self {
+            Self::Pawn => 1, Self::Knight => 3, Self::Bishop => 3, Self::Rook => 5, Self::Queen => 9,
+            Self::King => 0
+        }
+    }
+}
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Piece { pub piece_type: PieceType, pub player: usize, pub first_move: bool }
 impl Piece {
@@ -14,7 +21,7 @@ impl Piece {
     }
 }
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct Move { pub player: usize, pub from: Position, pub to: Position,
+pub struct Move { pub player: usize, pub from: usize, pub to: usize,
     pub promotion: Option<PieceType> }
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
@@ -25,6 +32,8 @@ pub struct State {
 pub trait StateTensor {
     fn state_tensor(&self) -> Tensor where Self: Variant;
     fn state_tensor_with_move(&mut self, movement: Move) -> Tensor where Self: Variant;
+    fn material_advantage_with_move(&mut self, movement: Move) -> i64 where Self: Variant;
+    fn is_other_king_in_check_with_move(&mut self, movement: Move) -> bool where Self: Variant;
     fn dimensions() -> Vec<usize> where Self: Variant;
 }
 pub trait Variant {
@@ -32,7 +41,8 @@ pub trait Variant {
     fn folder_name() -> String;
     fn possible_moves(&self, player: usize) -> Vec<Move>;
     fn legal_moves(&self, player: usize) -> Vec<Move>;
-    fn is_in_check(&self, player: usize, position: Position) -> bool;
+    fn board(&self) -> &Vec<Option<Piece>>;
+    fn is_in_check(&self, player: usize, position: usize) -> bool;
     fn is_king_in_check(&self, player: usize) -> bool;
     fn move_piece(&mut self, movement: Move);
     fn number_of_pieces() -> usize;
