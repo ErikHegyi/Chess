@@ -38,7 +38,7 @@ pub trait StateTensor {
 }
 pub trait Variant {
     fn new() -> Self;
-    fn folder_name() -> String;
+    fn variant_name() -> String;
     fn possible_moves(&self, player: usize) -> Vec<Move>;
     fn legal_moves(&self, player: usize) -> Vec<Move>;
     fn board(&self) -> &Vec<Option<Piece>>;

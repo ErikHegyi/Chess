@@ -389,7 +389,7 @@ impl ChessNet {
             match folder {
                 Some(path) => {
                     // Find the full path to the folder
-                    let path: PathBuf = path.join(format!("{folder_name}/matches", folder_name = G::folder_name()));
+                    let path: PathBuf = path.join(format!("{folder_name}/matches", folder_name = G::variant_name()));
 
                     // Get the ID of the match
                     let match_id: usize = read_dir(path.as_path()).unwrap().count() + 1;
@@ -408,7 +408,7 @@ impl ChessNet {
             // Export the model
             match folder {
                 Some(path) => {
-                    let file_path: PathBuf = path.join(format!("{folder_name}/model/model.ot", folder_name = G::folder_name()));
+                    let file_path: PathBuf = path.join(format!("{folder_name}/model/model.ot", folder_name = G::variant_name()));
                     let vs: &nn::VarStore = match self {
                         ChessNet::Net2D(net) => &net.variable_store,
                         ChessNet::Net3D(net) => &net.variable_store
